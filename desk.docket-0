@@ -1,10 +1,10 @@
-:~  title+'Micro'
-    info+'Create, share, and explore apps.'
-    color+0xff.4444
-    base+'micro'
-    site+/apps/micro
+:~  title+'Azimake'
+    info+'Create simple apps with Azimuth login.'
+    color+0x12.2311
+    base+'azimake'
+    site+/apps/azimake
     version+[0 1 0]
     website+'https://x.com/hanfel_dovned'
-    license+'Draconian'
+    license+'MIT'
 ==
 

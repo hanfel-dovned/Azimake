@@ -13,8 +13,8 @@
 ::
 +$  create-action
   $%  [%save =id =ui]
-      [%publish =id =url]    :: should probably scry the url from eyre
-      [%unpublish =id =url]  :: but eyre url is maybe incorrect anyway
+      [%publish =id =url]
+      [%unpublish =id =url]
       [%block-user =ship]
       [%unblock-user =ship]
       [%destroy-app =id]

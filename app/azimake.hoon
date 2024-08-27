@@ -1,12 +1,12 @@
-/-  creator, relay
+/-  azimake
 /+  dbug, default-agent, server, schooner
-/*  ui  %html  /app/creator/html
+/*  ui  %html  /app/azimake/html
 ::
 |%
 ::
 +$  versioned-state  $%(state-0)
 ::
-+$  state-0  [%0 =apps:creator blocked=(set ship)]
++$  state-0  [%0 =apps:azimake blocked=(set ship)]
 ::
 +$  card  card:agent:gall
 --
@@ -80,7 +80,7 @@
   %-  emit
   :*  %pass   /eyre/connect   
       %arvo  %e  %connect
-      `/apps/creator  %creator
+      `/apps/azimake  %azimake
   ==
 ::
 ++  load
@@ -95,16 +95,16 @@
   ?+    -.cage  !!
       %handle-http-request
     (handle-http !<([@ta =inbound-request:eyre] +.cage))
-      %creator-create-action
-    (handle-create-action !<(create-action:creator +.cage))
+      %azimake-create-action
+    (handle-create-action !<(create-action:azimake +.cage))
   ==
 ::
 ++  handle-app-action
-  |=  [=id:creator act=app-action:creator]
+  |=  [=id:azimake act=app-action:azimake]
   ^+  that
   ?<  (gth src.bowl 0xffff.ffff)
   =/  app  
-    ^-  app:creator  
+    ^-  app:azimake  
     (~(got by apps) id)
   =-  that(apps (~(put by apps) id [ui.app - published.app]))  
   ?-    -.act
@@ -118,41 +118,28 @@
   ==
 ::
 ++  handle-create-action
-  |=  act=create-action:creator
+  |=  act=create-action:azimake
   ^+  that
   ?>  =(src.bowl our.bowl)
   ?-    -.act
       %save
-    =/  old  
-      ^-  (unit app:creator)  
-      (~(get by apps) id.act)
-    =/  ct
-      ?~  old  ~
-      county.u.old
-    =/  pb
-      ?~  old  %.n
-      published.u.old
-    that(apps (~(put by apps) id.act [ui.act ct pb]))
+    =;  new
+      that(apps (~(put by apps) id.act new))
+    =/  old  `(unit app:azimake)`(~(get by apps) id.act)
+    :-  ui.act
+    ?~  old
+      [~ %.n]
+    [county.u.old published.u.old]
   ::
       %publish
-    =/  old  
-      ^-  app:creator
-      (~(got by apps) id.act)
-    =/  ct  county.old
-    =/  ui  ui.old
-    =.  that
-      that(apps (~(put by apps) id.act [ui ct %.y]))
-    (poke-relay [%publish url.act])
+    =/  old  `app:azimake`(~(got by apps) id.act)
+    =/  new  [ui.old county.old %.y]
+    that(apps (~(put by apps) id.act new))
   ::
       %unpublish
-    =/  old  
-      ^-  app:creator
-      (~(got by apps) id.act)
-    =/  ct  county.old
-    =/  ui  ui.old
-    =.  that
-      that(apps (~(put by apps) id.act [ui ct %.n]))
-    (poke-relay [%unpublish url.act])
+    =/  old  `app:azimake`(~(got by apps) id.act)
+    =/  new  [ui.old county.old %.n]
+    that(apps (~(put by apps) id.act new))
   ::
       %block-user
     that(blocked (~(put in blocked) ship.act))
@@ -162,26 +149,14 @@
   ::
       %destroy-app
     that(apps (~(del by apps) id.act))
-    ::also unpublish. need my url from eyre
   ::
       %delete-user-data
-    =/  old  
-      ^-  app:creator
-      (~(got by apps) id.act)
-    =/  pb  published.old
-    =/  ui  ui.old
-    =/  ct  (~(del by county.old) ship.act)
-    that(apps (~(put by apps) id.act [ui ct pb]))
-  ==
-::
-++  poke-relay
-  |=  =action:relay
-  ^+  that
-  %-  emit
-  :*  %pass  /publish 
-      %agent  [~ridlyd %relay] 
-      %poke  %relay-action
-      !>(action)
+    =;  new
+      that(apps (~(put by apps) id.act new))
+    =/  old  `app:azimake`(~(got by apps) id.act)
+    :+  ui.old 
+      (~(del by county.old) ship.act) 
+    published.old
   ==
 ::
 ++  handle-http
@@ -198,21 +173,19 @@
     ?~  body.request.inbound-request  !!
     ?+    site  (emil (flop (send [404 ~ [%plain "404 - Not Found"]])))
     ::
-        [%apps %creator ~]
+        [%apps %azimake ~]
       ?>  =(our.bowl src.bowl)
       =/  json  (de:json:html q.u.body.request.inbound-request)
       =/  act  (dejs-create-action +.json)
       =.  that  (handle-create-action act)
       (emil (flop (send [200 ~ [%none ~]])))
     ::
-        [%apps %creator @ ~]
+        [%apps %azimake @ ~]
       ?<  (gth src.bowl 0xffff.ffff) ::must be a planet to POST
       =/  json  (de:json:html q.u.body.request.inbound-request)
       =/  act  (dejs-app-action +.json)
       =/  id  +14:site
-      =/  app
-        ^-  app:creator
-        (~(got by apps) id)
+      =/  app  `app:azimake`(~(got by apps) id)
       ?>  ?|  =(%.y published.app)
               =(src.bowl our.bowl)
           ==
@@ -226,18 +199,18 @@
     %-  send
     ?+    site  [404 ~ [%plain "404 - Not Found"]]
     ::
-        [%apps %creator ~]
+        [%apps %azimake ~]
       ?>  =(our.bowl src.bowl)
       [200 ~ [%html ui]]
     ::
-        [%apps %creator %list-of-apps-as-json ~]
+        [%apps %azimake %list-of-apps-as-json ~]
       ?>  =(our.bowl src.bowl)
       [200 ~ [%json (enjs-apps apps)]]
     ::
-        [%apps %creator @ ~]
+        [%apps %azimake @ ~]
       =/  id  +14:site
       =/  app
-        ^-  app:creator
+        ^-  app:azimake
         (~(got by apps) id)
       ?>  ?|  =(%.y published.app)
               =(src.bowl our.bowl)
@@ -245,10 +218,10 @@
       =/  fe  ui.app
       [200 ~ [%html fe]]
     ::
-        [%apps %creator @ %state ~]
+        [%apps %azimake @ %state ~]
       =/  id  +14:site
       =/  app
-        ^-  app:creator
+        ^-  app:azimake
         (~(got by apps) id)
       ?>  ?|  =(%.y published.app)
               =(src.bowl our.bowl)
@@ -256,17 +229,17 @@
       =/  ct  county.app
       [200 ~ [%json (enjs-county ct)]]
     ::
-        [%apps %creator @ %eauth ~]
+        [%apps %azimake @ %eauth ~]
       =/  redirect
         %-  crip 
-        ['/' 'apps' '/' 'creator' '/' +14:site '&eauth' ~]
+        ['/' 'apps' '/' 'azimake' '/' +14:site '&eauth' ~]
       [302 ~ [%login-redirect redirect]] 
     ==  
   ==
 ::
 ++  enjs-county
   =,  enjs:format
-  |=  =county:creator
+  |=  =county:azimake
   ^-  json
   %-  pairs
   :~
@@ -277,24 +250,24 @@
       %-  pairs
       %+  turn
         ~(tap by county)
-      |=  [user=@p m=(map =key:creator =value:creator)]
+      |=  [user=@p m=(map =key:azimake =value:azimake)]
       :-  (scot %p user)
       %-  pairs
       %+  turn
         ~(tap by m)
-      |=  [=key:creator =value:creator]
+      |=  [=key:azimake =value:azimake]
       :-  key
       [%s value]
   ==
 ::
 ++  enjs-apps
   =,  enjs:format
-  |=  =apps:creator
+  |=  =apps:azimake
   ^-  json
   %-  pairs
   %+  turn
     ~(tap by apps)
-  |=  [=id:creator =app:creator]
+  |=  [=id:azimake =app:azimake]
   :-  id
   %-  pairs
   :~  [%ui [%s ui:app]]
@@ -304,7 +277,7 @@
 ++  dejs-app-action
   =,  dejs:format
   |=  jon=json
-  ^-  app-action:creator
+  ^-  app-action:azimake
   %.  jon
   %-  of
   :~  [%put-in-map (ot ~[key+so value+so])]  
@@ -313,7 +286,7 @@
 ++  dejs-create-action
   =,  dejs:format
   |=  jon=json
-  ^-  create-action:creator
+  ^-  create-action:azimake
   %.  jon
   %-  of
   :~  [%save (ot ~[id+so ui+so])]  
