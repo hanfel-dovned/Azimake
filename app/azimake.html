@@ -44,8 +44,8 @@
 
 <!-- Step One -->
 <div id="step1" class="step">
-    <p>Micro lets you easily make a simple Urbit app and have it automatically appear in everyone's Micro feed.</p>
-    <p>You'll host this app on your ship, just like a group chat, and other people will be able to post data to it and read data from it.</p>
+    <p>Azimake lets you easily make a simple app that users can log into using MetaMask and their Urbit ID.</p>
+    <p>You'll host this app on your ship and other people will be able to post data to it and read data from it.</p>
     <p>Use the Create App button below to name and initialize your new app.</p>
     <p>Then click on it under Edit Existing Apps to get started.</p>
     <input type="text" id="appTitle" placeholder="New App Name">
@@ -58,8 +58,7 @@
 <div id="step2" class="step">
   <p>As the app host, you'll hold a map of user to data in your state.</p>
   <p>You'll serve this state, along with the UI, from a public-facing webpage on your ship.</p>
-  <p>Users will use eAuth to log into your app with their Urbit ID and update their data using the pre-defined functions below.</p>
-  <p>Creating a micro app is fundamentally about finding interesting interactions around user-submitted data.</p>
+  <p>Users will use MetaMask to log into your app with their Urbit ID and update their data using the pre-defined functions below.</p>
   <p>Save will save your app's UI. Publish will make your app publicly viewable.</p>
 
   <div class="editor-container">
@@ -80,7 +79,7 @@
 
     // Fetch the list of apps when the page loads
     document.addEventListener("DOMContentLoaded", function() {
-        fetch('/apps/creator/list-of-apps-as-json')
+        fetch('/apps/azimake/list-of-apps-as-json')
         .then(response => response.json())
         .then(data => {
             const appListDiv = document.getElementById('appList');
@@ -124,7 +123,7 @@
             ui: placeholderUI
         };
 
-        fetch('/apps/creator', {
+        fetch('/apps/azimake', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -174,7 +173,7 @@
             ui: placeholderUI
         };
 
-        fetch('/apps/creator', {
+        fetch('/apps/azimake', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -201,7 +200,7 @@
         const dataToSend = JSON.stringify({"publish":  {"id": appName, "url": appURL}});
         
 
-        fetch('/apps/creator', {
+        fetch('/apps/azimake', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -261,11 +260,21 @@
       background-color: black;
       border: none;
     }
+
+    #urbitIdInput {
+      background-color: white;
+      color: black;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 5px;
+      font-size: 12px;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
   <div id="topBar" style="display:none;">
-    <p class="topBarText">Log in with Urbit to use this app.</p>
+    <input id="urbitIdInput" type="text" placeholder="Enter Urbit ID" />
     <button id="loginButton" onclick="login()">Log In</button>
   </div>
   <input id="postText"></input><br>
@@ -273,7 +282,7 @@
   <div id="dataContainer"></div>
   <script>
     //Make sure to close the script tag at the bottom!
-    
+
     //This code gets the data from Urbit to the web frontend and
     //creates the Post function that lets users post data back to Urbit.
     //If you don't understand what's going on here,
@@ -282,13 +291,13 @@
     appName = $$$$$;
 
     async function getState() {
-      const response = await fetch('/apps/creator/' + appName + '/state')
+      const response = await fetch('/apps/azimake/' + appName + '/state')
       return response.json()
     }
     getState().then((state) => renderPage(state))
 
     function post(key, value) {
-      fetch('/apps/creator/' + appName, {
+      fetch('/apps/azimake/' + appName, {
           method: 'POST',
           body: JSON.stringify({"put-in-map": {"key": key, "value": value}})
       })
@@ -304,8 +313,38 @@
       post("default", text);
     }
 
-    function login() {
-      window.location.href = `/apps/creator/${appName}/eauth`;
+    async function login() {
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const account = accounts[0];
+      
+      const urbitId = document.getElementById("urbitIdInput").value;
+      const challenge = await fetch(`/apps/azimake/${appName}/challenge`).then(res => res.text());
+      
+      const signature = await window.ethereum.request({
+        method: "personal_sign",
+        params: [account, challenge],
+      });
+
+      const body = {
+        who: urbitId,
+        address: account,
+        signature: signature,
+        secret: challenge,
+      };
+
+      const response = await fetch('/apps/azimake/' + appName, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ auth: body }),
+      });
+
+      if (response.ok) {
+        location.reload();
+      } else {
+        alert("Login failed. Please try again.");
+      }
     }
 
     function renderPage(state) {
@@ -316,7 +355,7 @@
       user = state.user;  //the logged in user
 
       // Show or hide the top bar based on the length of the user string
-      // is this user a comet (aka a rando) or a planet (logged in via eauth)?
+      // is this user a comet (aka a rando) or logged in?
       const topBar = document.getElementById("topBar");
       if (user.length > 14) {
         document.getElementById('topBar').style.display = 'flex';
@@ -337,9 +376,7 @@
     }
     <" + "/script> <!-- Close this tag to render your app properly! -->
 </body>
-</html>  
-</script>
-  
+</html>
 
 </body>
 </html>

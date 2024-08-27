@@ -9,6 +9,7 @@
 +$  apps  (map =id =app)
 +$  app-action
   $%  [%put-in-map =key =value]
+      [%auth who=@p =secret address=tape signature=tape]
   ==
 ::
 +$  create-action
@@ -20,4 +21,8 @@
       [%destroy-app =id]
       [%delete-user-data =id =ship]
   ==
+::
++$  secret  @uv
++$  sessions  (map comet=@p id=@p)
++$  challenges  (set secret)
 --
