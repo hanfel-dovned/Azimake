@@ -109,10 +109,10 @@
   |=  [=id:az act=app-action:az]
   ^+  that
   =/  user  get-user
-  ?<  (gth user 0xffff.ffff)
   =/  app  `app:az`(~(got by apps) id) 
   ?-    -.act
       %put-in-map
+    ?<  (gth user 0xffff.ffff)
     =-  that(apps (~(put by apps) id [ui.app - published.app])) 
     %+  ~(put by county.app) 
       user
@@ -124,6 +124,7 @@
       %auth
     ?.  (validate +.act)
       !!
+~&  >>  'validated'
     %=  that
       sessions  (~(put by sessions) [src.bowl who.act])
     ==
@@ -202,7 +203,6 @@
       (emil (flop (send [200 ~ [%none ~]])))
     ::
         [%apps %azimake @ ~]
-      ?<  (gth get-user 0xffff.ffff)
       =/  json  (de:json:html q.u.body.request.inbound-request)
       =/  act  (dejs-app-action +.json)
       =/  id  +14:site
@@ -216,17 +216,18 @@
     ==
     ::
       %'GET'
-    %-  emil
-    %-  flop
-    %-  send
-    ?+    site  [404 ~ [%plain "404 - Not Found"]]
+    ?+    site  
+      %-  emil  %-  flop  %-  send
+      [404 ~ [%plain "404 - Not Found"]]
     ::
         [%apps %azimake ~]
       ?>  =(our.bowl src.bowl)
+      %-  emil  %-  flop  %-  send
       [200 ~ [%html ui]]
     ::
         [%apps %azimake %list-of-apps-as-json ~]
       ?>  =(our.bowl src.bowl)
+      %-  emil  %-  flop  %-  send
       [200 ~ [%json (enjs-apps apps)]]
     ::
         [%apps %azimake @ ~]
@@ -236,6 +237,7 @@
               =(src.bowl our.bowl)
           ==
       =/  fe  ui.app
+      %-  emil  %-  flop  %-  send
       [200 ~ [%html fe]]
     ::
         [%apps %azimake @ %state ~]
@@ -254,12 +256,14 @@
           =(src.bowl (~(got by sessions) src.bowl))
         (~(put in challenges) new-challenge)
       =/  ct  county.app
+      %-  emil  %-  flop  %-  send
       [200 ~ [%json (enjs-county [ct new-challenge])]]
     ::
         [%apps %azimake @ %eauth ~]
       =/  redirect
         %-  crip 
         ['/' 'apps' '/' 'azimake' '/' +14:site '&eauth' ~]
+      %-  emil  %-  flop  %-  send
       [302 ~ [%login-redirect redirect]] 
     ==  
   ==
