@@ -318,7 +318,6 @@
       const account = accounts[0];
       
       const urbitId = document.getElementById("urbitIdInput").value;
-      const challenge = await fetch(`/apps/azimake/${appName}/challenge`).then(res => res.text());
       
       const signature = await window.ethereum.request({
         method: "personal_sign",
@@ -353,6 +352,7 @@
       data = state.data;  //(map ship (map key=@t value=@t))
       host = state.host;  //the app host
       user = state.user;  //the logged in user
+      challenge = state.challenge //the metamask secret for login
 
       // Show or hide the top bar based on the length of the user string
       // is this user a comet (aka a rando) or logged in?
