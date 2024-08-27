@@ -176,6 +176,8 @@
 ::
 ++  get-user
   ^-  @p
+  ?.  (gth src.bowl 0xffff.ffff)
+    src.bowl
   (~(got by sessions) src.bowl)
 ::
 ++  handle-http
